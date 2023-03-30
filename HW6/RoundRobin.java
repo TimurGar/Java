@@ -24,7 +24,7 @@ public class RoundRobin extends OperatingSystem {
 
 		List<Program> programList = getProgramList();
 		populateQueues(programList);
-		execute(timeSlice);
+		execute();
 	}
 
     // populates the four queues with programs from the program list according to the priorities of the programs
@@ -72,11 +72,11 @@ public class RoundRobin extends OperatingSystem {
 		logger("Total wait time: " + getTotalWaitTime());
 
 		logger("QUEUE B");
-		executeB(queueB, timeSlice);
+		executeB(queueB, getTimeSlice());
 		logger("Total wait time: " + getTotalWaitTime());
 
 		logger("QUEUE C");		
-		executeC(queueC, timeSlice);
+		executeC(queueC, getTimeSlice());
 		logger("Total wait time: " + getTotalWaitTime());
 
 		logger("QUEUE D");		
@@ -88,6 +88,10 @@ public class RoundRobin extends OperatingSystem {
 		logger("Average waiting time: " + getAverageWaitTime());		
 	}	
     private void executeA(Deque<Program> queue, int timeSlice){
+		boolean prevProgramState = false;
+		Program previousProgram = null;
+		Deque<Program> queuePreviousPrograms = new ArrayDeque<>();;
+
 		while (!queue.isEmpty()){
             // retrieve program at the front of the of the queue
 			Program currentProgram = queue.remove();
@@ -104,29 +108,49 @@ public class RoundRobin extends OperatingSystem {
 			// run the current program for a time slice
 			int runTime = currentProgram.run(currentExecution);
 
+			// if(prevProgramState == true){
+			if(!queuePreviousPrograms.isEmpty()){	
+				
+				logger("Runnig previous program");
+				System.out.println(queuePreviousPrograms.peek());
+
+				previousProgram = queuePreviousPrograms.removeFirst();
+				// log the current program - add the information about the current program to the OS's log
+				logger("clock: " + currentTime() + previousProgram + "wait time: " + waitTime);
+				runTime = previousProgram.run(currentExecution);
+
+				// prevProgramState = false;
+				logger("---");
+				// logger("queue is empty");
+			}
+			
+			if(currentProgram.getTimeLeft() != 0){
+				queuePreviousPrograms.addLast(currentProgram);
+				// previousProgram = currentProgram;
+				// prevProgramState = true;
+			}
+
+			
+
+					
 			// update the clock
 			tick(runTime);
 
 			// update the total wait time
-			updateTotalWaitTime(waitTime); 
+			updateTotalWaitTime(waitTime);
 
-
-			Program nextProgram = queue.remove();
-
-			waitTime = currentTime();
-			logger("clock: " + currentTime() + nextProgram + "wait time: " + waitTime);
-			// run the next program for a time slice
-			runTime = nextProgram.run(currentExecution);
-			tick(runTime);
-			updateTotalWaitTime(waitTime); 
+			// waitTime = currentTime();
+			// logger("clock: " + currentTime() + nextProgram + "wait time: " + waitTime);
+			// // run the next program for a time slice
+			// runTime = nextProgram.run(currentExecution);
+			// tick(runTime);
+			// updateTotalWaitTime(waitTime); 
 
 			
-			if(currentProgram.getTimeLeft() != 0){
-				queue.addFirst(currentProgram);
-			}
-			if(nextProgram.getTimeLeft() != 0){
-				queue.addFirst(nextProgram);
-			}
+			
+			// if(nextProgram.getTimeLeft() != 0){
+			// 	queue.addFirst(nextProgram);
+			// }
 
 		}	
 	}
